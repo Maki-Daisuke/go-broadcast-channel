@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestBroadcast(t *testing.T) {
@@ -48,7 +49,7 @@ func TestBroadcast(t *testing.T) {
 }
 
 func TestWithWrongReciever(t *testing.T) {
-	b := New[int](0)
+	b := New[int](0).WithTimeout(1 * time.Second)
 	defer b.Close()
 
 	wg := &sync.WaitGroup{}
