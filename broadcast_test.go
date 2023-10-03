@@ -1,6 +1,7 @@
 package broadcastchannel
 
 import (
+	"reflect"
 	"sync"
 	"testing"
 )
@@ -13,24 +14,22 @@ func TestBroadcast(t *testing.T) {
 	wg.Add(2)
 
 	// Create two subscribers.
-	ch1 := make(chan int, 0)
+	r1 := []int{}
+	ch1 := make(chan int)
 	b.Subscribe(ch1)
 	go func() {
 		for v := range ch1 {
-			if v != 1 {
-				t.Fatalf("expected %d, got %d", 1, v)
-			}
+			r1 = append(r1, v)
 		}
 		wg.Done()
 	}()
 
-	ch2 := make(chan int, 0)
+	r2 := []int{}
+	ch2 := make(chan int)
 	b.Subscribe(ch2)
 	go func() {
 		for v := range ch2 {
-			if v != 1 {
-				t.Fatalf("expected %d, got %d", 1, v)
-			}
+			r2 = append(r2, v)
 		}
 		wg.Done()
 	}()
@@ -40,4 +39,10 @@ func TestBroadcast(t *testing.T) {
 	b.Close()
 
 	wg.Wait()
+	if !reflect.DeepEqual(r1, []int{1}) {
+		t.Errorf("r1 = %v, want %v", r1, []int{1})
+	}
+	if !reflect.DeepEqual(r2, []int{1}) {
+		t.Errorf("r2 = %v, want %v", r2, []int{1})
+	}
 }

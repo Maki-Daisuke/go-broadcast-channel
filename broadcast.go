@@ -15,7 +15,7 @@ type Broadcaster[T any] struct {
 func New[T any](n int) *Broadcaster[T] {
 	b := &Broadcaster[T]{
 		valCh: make(chan T, n),
-		subCh: make(chan chan<- T, 0),
+		subCh: make(chan chan<- T),
 	}
 	go b.run()
 	return b
