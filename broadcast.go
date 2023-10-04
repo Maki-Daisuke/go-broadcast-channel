@@ -47,16 +47,20 @@ func (b *Broadcaster[T]) run() {
 }
 
 func (b *Broadcaster[T]) destroy() {
+	// A channel maybe already closed. So, ignore panics.
+	ignorePanic(func() { close(b.subCh) })
+	for _, c := range b.sendCases {
+		ignorePanic(func() { c.Chan.Close() })
+	}
+}
+
+func ignorePanic(f func()) {
 	defer func() {
 		if r := recover(); r != nil {
-			// A channel maybe already closed. So, ignore it.
-			return
+			// Ignore.
 		}
 	}()
-	close(b.subCh)
-	for _, c := range b.sendCases {
-		c.Chan.Close()
-	}
+	f()
 }
 
 func (b *Broadcaster[T]) broadcast(v T) {
@@ -72,14 +76,11 @@ func (b *Broadcaster[T]) broadcast(v T) {
 	cases = append(cases, b.sendCases...)
 
 	for len(cases) > 1 {
-		// Wait for one of the cases to be ready.
-		chosen, _, _ := reflect.Select(cases)
-		if chosen == 0 {
-			// Timeout.
+		timeout := false
+		cases, timeout = b.doSelect(cases)
+		if timeout {
 			break
 		}
-		// Remove the case that was done.
-		cases = append(cases[:chosen], cases[chosen+1:]...)
 	}
 	for _, c := range cases[1:] {
 		// If there are remaining cases, they are timed out.
@@ -91,6 +92,64 @@ func (b *Broadcaster[T]) broadcast(v T) {
 			}
 		}
 	}
+}
+
+func (b *Broadcaster[T]) doSelect(c []reflect.SelectCase) (cases []reflect.SelectCase, timeout bool) {
+	cases = c
+	defer func() {
+		if r := recover(); r != nil {
+			// If you are here, reflect.Select below paniced because one of channels is closed.
+			// However, which we don't know which one is closed. So, try one by one.
+			for i := 1; i < len(cases); {
+				switch trySend(cases[i]) {
+				case trySendDone:
+					cases = append(cases[:i], cases[i+1:]...)
+				case trySendBlocked:
+					i++
+				case trySendClosed:
+					// Remove the channel from the Broadcaster.
+					for j := range b.sendCases {
+						if b.sendCases[j].Chan.Equal(cases[i].Chan) {
+							b.sendCases = append(b.sendCases[:j], b.sendCases[j+1:]...)
+							break
+						}
+					}
+					cases = append(cases[:i], cases[i+1:]...)
+				}
+			}
+		}
+	}()
+	// Wait for one of the cases to be ready.
+	chosen, _, _ := reflect.Select(cases)
+	if chosen == 0 {
+		// Timeout.
+		return cases, true
+	}
+	// Remove the case that was done.
+	cases = append(cases[:chosen], cases[chosen+1:]...)
+	return cases, false
+}
+
+type trySendResult int
+
+const (
+	trySendBlocked trySendResult = iota
+	trySendDone
+	trySendClosed
+)
+
+func trySend(c reflect.SelectCase) (ret trySendResult) {
+	defer func() {
+		if r := recover(); r != nil {
+			// If you are here, reflect.Select paniced because, that is, the channel is closed.
+			ret = trySendClosed
+		}
+	}()
+	chesen, _, _ := reflect.Select([]reflect.SelectCase{c, {Dir: reflect.SelectDefault}})
+	if chesen == 0 {
+		return trySendDone
+	}
+	return trySendBlocked
 }
 
 // Chan returns a channel that can be used to send values to all subscribers.
