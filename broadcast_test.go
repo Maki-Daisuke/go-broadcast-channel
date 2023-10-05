@@ -130,3 +130,13 @@ func TestWithClosingReciever(t *testing.T) {
 		t.Errorf("r2 = %v, want %v", r2, []int{1})
 	}
 }
+
+func TestCloseTwice(t *testing.T) {
+	b := New[int](0)
+	if err := b.Close(); err != nil {
+		t.Errorf("err = %v, want %v", err, nil)
+	}
+	if err := b.Close(); err == nil {
+		t.Errorf("err = %v, want non-nil error", err)
+	}
+}
