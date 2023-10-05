@@ -58,7 +58,7 @@ This implementation blocks entire broadcasting when one of the receivers stalls.
 
 To avoid that, use `select` statement and add (optional) timeout feature.
 
-### Channel as Interface
+### Channel as API
 
 Use channel both to send and to receive values, so that `select` 
 statement can be used for non-blocking communication.
