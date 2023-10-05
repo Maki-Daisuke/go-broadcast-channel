@@ -26,6 +26,8 @@ func New[T any](n int) *Broadcaster[T] {
 	return b
 }
 
+// WithTimeout sets a timeout for broadcasting.
+// If a subscriber is blocked for the timeout, it will be removed from the Broadcaster.
 func (b *Broadcaster[T]) WithTimeout(d time.Duration) *Broadcaster[T] {
 	b.timeout = d
 	return b
@@ -72,6 +74,13 @@ func (b *Broadcaster[T]) broadcast(v T) {
 	timeout := time.NewTimer(b.timeout)
 	defer timeout.Stop()
 
+	// Construct select cases like this:
+	// select {
+	// case <-timeout.C:
+	// case ch1 <- v:
+	// case ch2 <- v:
+	// ...
+	// }
 	cases := []reflect.SelectCase{{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(timeout.C)}}
 	cases = append(cases, b.sendCases...)
 
@@ -171,7 +180,6 @@ func (b *Broadcaster[T]) Close() {
 
 // Subscribe subscribes to the Broadcaster.
 // It returns an error if the Broadcaster is already closed.
-// It returns error if the Broadcaster is already closed.
 // Otherwise, it returns nil.
 func (b *Broadcaster[T]) Subscribe(ch chan<- T) (err error) {
 	defer func() {
