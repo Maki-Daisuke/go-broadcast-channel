@@ -97,6 +97,7 @@ func (b *Broadcaster[T]) broadcast(v T) {
 		for i := range b.sendCases {
 			if b.sendCases[i].Chan.Equal(c.Chan) {
 				b.sendCases = append(b.sendCases[:i], b.sendCases[i+1:]...)
+				ignorePanic(func() { c.Chan.Close() })
 				break
 			}
 		}
