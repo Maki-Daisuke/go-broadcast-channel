@@ -48,7 +48,7 @@ func TestBroadcast(t *testing.T) {
 	}
 }
 
-func TestWithWrongReciever(t *testing.T) {
+func TestWithWrongReceiver(t *testing.T) {
 	b := New[int](0).WithTimeout(1 * time.Second)
 	defer b.Close()
 
@@ -89,7 +89,7 @@ func TestWithWrongReciever(t *testing.T) {
 	}
 }
 
-func TestWithClosingReciever(t *testing.T) {
+func TestWithClosingReceiver(t *testing.T) {
 	b := New[int](0)
 	defer b.Close()
 
