@@ -168,7 +168,8 @@ func (b *Broadcaster[T]) Chan() chan<- T {
 }
 
 // Close closes the Broadcaster and all its subscribers.
-// It is safe to call Close multiple times.
+// This is shortcut of `close(b.Chan())` actually, but
+// it is safe to call Close() multiple times.
 func (b *Broadcaster[T]) Close() {
 	defer func() {
 		if r := recover(); r != nil {
@@ -182,6 +183,7 @@ func (b *Broadcaster[T]) Close() {
 // Subscribe subscribes to the Broadcaster.
 // It returns an error if the Broadcaster is already closed.
 // Otherwise, it returns nil.
+// To unsubscribe, just close the receiver channel.
 func (b *Broadcaster[T]) Subscribe(ch chan<- T) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
