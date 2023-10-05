@@ -63,6 +63,9 @@ To avoid that, use `select` statement and add (optional) timeout feature.
 Use channel both to send and to receive values, so that `select` 
 statement can be used for non-blocking communication.
 
+## API Reference
+
+See [GoDoc](https://pkg.go.dev/github.com/Maki-Daisuke/go-broadcast-channel).
 
 ## Author
 
