@@ -109,7 +109,7 @@ func (b *Broadcaster[T]) doSelect(c []reflect.SelectCase) (cases []reflect.Selec
 	defer func() {
 		if r := recover(); r != nil {
 			// If you are here, reflect.Select below paniced because one of channels is closed.
-			// However, which we don't know which one is closed. So, try one by one.
+			// However, we don't know which one is closed. So, try one by one.
 			for i := 1; i < len(cases); {
 				switch trySend(cases[i]) {
 				case trySendDone:
