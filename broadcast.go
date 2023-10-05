@@ -155,8 +155,8 @@ func trySend(c reflect.SelectCase) (ret trySendResult) {
 			ret = trySendClosed
 		}
 	}()
-	chesen, _, _ := reflect.Select([]reflect.SelectCase{c, {Dir: reflect.SelectDefault}})
-	if chesen == 0 {
+	chosen, _, _ := reflect.Select([]reflect.SelectCase{c, {Dir: reflect.SelectDefault}})
+	if chosen == 0 {
 		return trySendDone
 	}
 	return trySendBlocked
